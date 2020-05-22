@@ -7,3 +7,6 @@ My collection of AI-based personal projects
 
 * [Blackjack](https://github.com/connortodd21/ai_projects/tree/master/blackjack)
   * Blackjack simulation to display the best stop policy using Monte Carlo sampling. A stop policy is defined as the card number for which a user will always stop 'hitting'.
+
+* [Flappy Bird](https://github.com/connortodd21/ai_projects/tree/master/flappy-bird)
+  * Flappy Bird AI that makes decisions using states and values learned from self-play over a significant number of iterations
