@@ -1,6 +1,7 @@
 from itertools import cycle
 import random
 import sys
+import copy
 
 from time import sleep
 import argparse
@@ -12,15 +13,16 @@ from pygame.locals import *
 
 from enum import Enum
 
-SCORES = []
+move_history = []
 ITERATIONS = 0
 MAX_SCORE = 10_000_000
 RESUME_ONCRASH = False
+replay_game = False
 UI = True
 agent = Agent()
 NORMAL_GAME = True
 TRAINING = False
-MODE = 0 # NORMAL = 0, AI = 1
+MODE = 0 # NORMAL = 0, AI_TRAIN = 1, AI_PLAY
 
 FPS = 30
 SCREENWIDTH  = 288
@@ -58,21 +60,6 @@ PLAYERS_LIST = (
         'assets/sprites/yellowbird-midflap.png',
         'assets/sprites/yellowbird-downflap.png',
     ),
-    # (
-    #     'IMG_2217.jpeg',
-    #     'IMG_2217.jpeg',
-    #     'IMG_2217.jpeg'
-    # ),
-    # (
-    #     'IMG_2217.jpeg',
-    #     'IMG_2217.jpeg',
-    #     'IMG_2217.jpeg'
-    # ),
-    # (
-    #     'IMG_2217.jpeg',
-    #     'IMG_2217.jpeg',
-    #     'IMG_2217.jpeg'
-    # ),
 )
 
 # list of backgrounds
@@ -95,7 +82,7 @@ except NameError:
 
 
 def main():
-    global SCREEN, FPSCLOCK, FPS, MODE, SCORES, ITERATIONS, MAX_SCORE, RESUME_ONCRASH, agent, UI, NORMAL_GAME, HITMASKS, TRAINING
+    global SCREEN, FPSCLOCK, FPS, MODE, move_history, ITERATIONS, MAX_SCORE, RESUME_ONCRASH, agent, UI, NORMAL_GAME, HITMASKS, TRAINING
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
@@ -111,7 +98,7 @@ def main():
     parser.add_argument("--resume", action="store_true", help="Resume game from last 50 steps before crash")
     parser.add_argument("--max", type=int, default=10_000_000, help="maxium score per episode, restart game if agent reach this score, default: 10M")
     parser.add_argument("--dump_hitmasks", action="store_true", help="dump hitmasks to file and exit")
-    parser.add_argument("--ui", type=str, choices=['e', 'd'], help="enable or disable UI and sound")
+    parser.add_argument("--noui", action="store_true", default=True, help="Disable the UI")
     args = parser.parse_args()
 
     FPS = args.fps
@@ -121,28 +108,29 @@ def main():
     alpha = args.alpha
     discount = args.discount
     epsilon = args.epsilon
-
-    print(args.ai)
+    agent = Agent(discount, alpha, epsilon)
+    UI = (not args.noui)
 
     if args.ai == 't':
         MODE = 1
         TRAINING = True
+        UI = False
     elif args.ai == 'p':
-        MODE = 1
+        MODE = 2
         TRAINING = False
+        UI = True
     else:
         MODE = 0
+        UI = True
 
     if args.resume:
         RESUME_ONCRASH = True
-    if args.ui == 'd':
-        UI = False
-        NORMAL_GAME = False
     
     if UI == False:
         # load dumped HITMASKS
         with open("data/hitmasks_data.pkl", "rb") as input:
             HITMASKS = pickle.load(input)
+
     else:    
         # numbers sprites for score display
         IMAGES['numbers'] = (
@@ -221,10 +209,23 @@ def main():
         crashInfo = 0
         if MODE == 1:
             for i in range(ITERATIONS):
-                print("Iteration...%d" %i)
                 crashInfo = mainGame(movementInfo)
-                # print(crashInfo['score'])
+                print("Iteration...%d" %i)
+                if i != 0 and i % (i / 100) == 0:
+                    print("Score: ", crashInfo['score']) 
+                    print(len(agent.move_history))
+                    agent.write_qvalues()
             agent.write_qvalues()
+            exit(1)
+        elif MODE == 2:
+            print(UI)
+            for i in range(ITERATIONS):
+                crashInfo = mainGame(movementInfo)
+                if i == 0 or i % (i / 10) == 0:
+                    print("Iteration...%d" %i)
+                    print(len(agent.move_history))
+                    print(crashInfo['score']) 
+                agent.write_qvalues()
             exit(1)
         else:
             crashInfo = mainGame(movementInfo)
@@ -255,18 +256,34 @@ def showWelcomeAnimation():
 
     while True:
         if UI == True:
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                    pygame.quit()
-                    sys.exit()
-                if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                    # make first flap sound and return values for mainGame
+            if MODE == 0:
+                for event in pygame.event.get():
+                    if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+                        # make first flap sound and return values for mainGame
+                        SOUNDS['wing'].play()
+                        return {
+                            'playery': playery + playerShmVals['val'],
+                            'basex': basex,
+                            'playerIndexGen': playerIndexGen,
+                        }
+            elif MODE == 2:
+                for event in pygame.event.get():
+                    if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        pygame.quit()
+                        sys.exit()
+                move = agent.epsilon_greedy("0_0_0_0", False)
+                if move == 1:
+                    # flap
                     SOUNDS['wing'].play()
                     return {
-                        'playery': playery + playerShmVals['val'],
-                        'basex': basex,
-                        'playerIndexGen': playerIndexGen,
-                    }
+                            'playery': playery + playerShmVals['val'],
+                            'basex': basex,
+                            'playerIndexGen': playerIndexGen,
+                        }
+
         else:
             return {
                 'playery': playery + playerShmVals['val'],
@@ -332,23 +349,57 @@ def mainGame(movementInfo):
 
     while True:
         if UI == True:
-            print(8)
-            for event in pygame.event.get():
-                print(9)
-                if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                    pygame.quit()
-                    sys.exit()
-                if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                    if playery > -2 * IMAGES['player'][0].get_height():
-                        print(event)
-                        playerVelY = playerFlapAcc
-                        playerFlapped = True
-                        SOUNDS['wing'].play()
-        
+            if MODE == 0:
+                for event in pygame.event.get():
+                    if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+                        if playery > -2 * IMAGES['player'][0].get_height():
+                            print(event)
+                            playerVelY = playerFlapAcc
+                            playerFlapped = True
+                            SOUNDS['wing'].play()
+            
+            elif MODE == 2:
+                for event in pygame.event.get():
+                    if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        pygame.quit()
+                        sys.exit()
+
+                if replay_game:
+                    resume_state = move_history[0]
+                    replay_game == (not replay_game)
+                    (playerx, playery, playerVelY, lowerPipes, upperPipes, score, playerIndex) = resume_state
+
+                state = agent.format_state(playerx, playery, playerVelY, lowerPipes)
+                # successors = get_successors(playerx, playery, basex, playerIndexGen)
+                if RESUME_ONCRASH:
+                    move_state = (playerx, playery, playerVelY, copy.deepcopy(lowerPipes), copy.deepcopy(upperPipes), score, playerIndex)
+                    move_history.append(move_state)
+                    if len(move_history) > 50:
+                        move_history.pop(0)
+                move = agent.epsilon_greedy(state, False)
+                if move == 1:
+                    # flap
+                    if playery > -2 * IMAGES_INFO['player'][0][HEIGHT]:
+                            playerVelY = playerFlapAcc
+                            playerFlapped = True
+                            SOUNDS['wing'].play()
         else:
+            if replay_game:
+                resume_state = move_history[0]
+                replay_game == (not replay_game)
+                (playerx, playery, playerVelY, lowerPipes, upperPipes, score, playerIndex) = resume_state
+            
             state = agent.format_state(playerx, playery, playerVelY, lowerPipes)
             # successors = get_successors(playerx, playery, basex, playerIndexGen)
             move = agent.epsilon_greedy(state, False)
+            if RESUME_ONCRASH:
+                state = (playerx, playery, playerVelY, copy.deepcopy(lowerPipes), copy.deepcopy(upperPipes), score, playerIndex)
+                move_history.append(state)
+                if len(move_history) > 50:
+                    move_history.pop(0)
             # move = agent.make_move_successors(state, successors)
             if move == 1:
                 # flap
@@ -361,7 +412,11 @@ def mainGame(movementInfo):
                             upperPipes, lowerPipes)
         if crashTest[0]:
             agent.update_qvalues()
-            # print(agent.qvalues)
+            if RESUME_ONCRASH == True:
+                resume_state = move_history[0]
+                replay_game == (not replay_game)
+                (playerx, playery, playerVelY, lowerPipes, upperPipes, score, playerIndex) = resume_state
+
             return {
                 'y': playery,
                 'groundCrash': crashTest[1],
@@ -381,6 +436,9 @@ def mainGame(movementInfo):
                 score += 1
                 if UI == True:
                     SOUNDS['point'].play()
+                if score > MAX_SCORE:
+                    agent.game_over()
+                    return {"score": score}
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:

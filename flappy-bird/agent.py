@@ -5,8 +5,9 @@ class Agent:
 
     def __init__(self, discount=.9, alpha=.7, epsilon=.3):
         self.discount = discount
-        self.alpa = alpha
+        self.alpha = alpha
         self.epsilon = epsilon
+        self.its = 0
         """
             Qvalues are stored here in a state, value pair
             State is defined as (x,y,v,p)
@@ -38,12 +39,27 @@ class Agent:
             return 0
         return -1000
 
+    def save_qvalues(self):
+        if len(self.move_history) > 6_000_000:
+            history = list(reversed(self.move_history[:5_000_000]))
+            for move in history:
+                state, action, nextState = move
+                reward = self.get_reward(True)
+                value = self.qvalues[state][action]
+                self.qvalues[state][action] = ((1 - self.alpha) * value) + (self.alpha * (reward + self.discount * max(self.qvalues[nextState][0:2])))
+            
+            self.moves = self.moves[5_000_000:]
+
     def update_qvalues(self):
         history = list(reversed(self.move_history))
         reward = 0
         moves_until_death = 0
         high_death_flag = True if len(history) == 0 or int(history[0][2].split("_")[1]) > 120 else False
         last_move_is_flap = True
+        self.its+=1
+
+        if self.its == 5:
+            print(history)
 
         for move in history:
             state = move[0]
@@ -51,19 +67,32 @@ class Agent:
             nextState = move[2]
             reward = 0
 
+            if self.its == 5:
+                print(action)
+                print(self.qvalues[state])
+
             self.qvalues[state][2] += 1
 
-            if moves_until_death < 2:
+            if moves_until_death <= 4:
                 reward = self.get_reward(False)
-                last_move_is_flap = False
+                if action == 1:
+                    last_move_is_flap = False
             elif (high_death_flag or last_move_is_flap) and action == 1:
+                high_death_flag = False
+                last_move_is_flap = False
                 reward = self.get_reward(False)
             else:
                 reward = self.get_reward(True)
+
+            if self.its == 5:
+                print(reward)
             
+            moves_until_death += 1
             value = self.qvalues[state][action]
-            self.qvalues[state][action] = ((1 - self.alpa) * value) + (self.alpa * (reward + self.discount * max(self.qvalues[nextState][0:2])))
-        
+            self.qvalues[state][action] = ((1 - self.alpha) * value) + (self.alpha * (reward + self.discount * max(self.qvalues[nextState][0:2])))
+            if self.its == 5:
+                print(self.qvalues[state])
+
         self.move_history = []
         self.num_games += 1
 
@@ -100,6 +129,7 @@ class Agent:
 
     def make_move(self, state):
         self.move_history.append((self.last_state, self.last_action, state))
+        self.save_qvalues()
         move = 0
         if self.qvalues[state][1] > self.qvalues[state][0]:
             move = 1
@@ -146,6 +176,7 @@ class Agent:
 
         x0 = pipe0["x"] - playerx
         y0 = pipe0["y"] - playery
+    
         if -50 < x0 <= 0:  
             y1 = pipe1["y"] - playery
         else:
