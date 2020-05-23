@@ -18,6 +18,7 @@ class Agent:
             Value is defined as (value_if_no_flap, value_if_flap, number_of_updates)
         """
         self.qvalues = {}
+        self.read_qvalues()
         """
             This will be a different way of solving the problem
             This dict will only contain the current qvalue as the value to the state key and will rely on looking at child values
