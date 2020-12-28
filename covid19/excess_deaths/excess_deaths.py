@@ -4,7 +4,7 @@ import pathlib
 import datetime
 
 list_of_states = ["Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North Carolina", "North Dakota", "Nebraska", "New Hampshire", "New Jersey", "New Mexico", "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West Virginia", "Wyoming", "United States"]
-list_of_states_temp = list_of_states[0:3]
+list_of_states_temp = list_of_states[0:11]
 ######################################################
 # 
 # You'll need to download the csv files at https://www.cdc.gov/nchs/nvss/vsrr/covid19/excess_deaths.htm#data-tables
@@ -76,8 +76,10 @@ with open(csv_path, newline='',  encoding='utf-8-sig') as csvfile:
     results_sorted_by_raw_excess_deaths = sorted(results_list, key=lambda k: k["data"][0], reverse=True)
     results_sorted_by_excess_death_percent = sorted(results_list, key=lambda k: k["data"][1], reverse=True)
     dash = '\u2500' * 170
-    print("{a:<60s}{c:^20s}{b:<60s}".format(a="States sorted by excess deaths", b="States sorted by excess death percent increase", c="|"))
+    print("{a:<55s}{c:^20s}{i:^5s}{c:^20s}{b:<60s}".format(a="States sorted by excess deaths", b="States sorted by excess death percent increase", c="|", i="i"))
     print(f"{dash}")
+    i = 0
     for (raw_state), (pct_state) in zip(results_sorted_by_raw_excess_deaths, results_sorted_by_excess_death_percent):
-        print("{:<60s}{:^20s}{:<60s}".format(f"{raw_state['state']} had {raw_state['data'][0]} excess deaths ({round(raw_state['data'][1],2)}% change)", "|" ,f"{pct_state['state']} had {pct_state['data'][0]} excess deaths ({round(pct_state['data'][1],2)}% change)"))
+        print("{:<55s}{:^20s}{i:^5d}{:^20s}{:<60s}".format(f"{raw_state['state']} had {raw_state['data'][0]} excess deaths ({round(raw_state['data'][1],2)}% change)", "|", "|" ,f"{pct_state['state']} had {pct_state['data'][0]} excess deaths ({round(pct_state['data'][1],2)}% change)", i=i))
+        i+=1
     print(f"\n\ndata current as of {datetime.datetime.fromtimestamp(fname.stat().st_ctime)}")
