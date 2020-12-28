@@ -1,5 +1,7 @@
 import csv
 import sys
+import pathlib
+import datetime
 
 ######################################################
 # 
@@ -13,27 +15,32 @@ labels: need the index of data for Jurisdiction, Type, Date, Deaths, Year
 def count_excess_deaths(data, data_type, labels, month_start):
     deaths_before_2020 = 0
     deaths_in_2020 = 0
+    deaths_per_year = {}
     list_of_years = []
     i = 0
     for row in data:
-        if row[labels["Year"]] not in list_of_years:
-            list_of_years.append(row[labels["Year"]])
+        year = row[labels["Year"]]
+        month = row[labels["Date"]][month_start:month_start+2]
+        if year not in list_of_years:
+            list_of_years.append(year)
+            deaths_per_year[year] = 0
         if row[labels["Jurisdiction"]] == "United States" and row[labels["Type"]] == data_type:
             deaths_str = row[labels["Deaths"]]
-            month = row[labels["Date"]][month_start:month_start+2]
-            if month == "12":
-                continue
             if deaths_str != '':
                 deaths = int(deaths_str)
-                if row[7] != "2020":
-                    # look through past years data, calculate average deaths per year before 2020
-                    deaths_before_2020 += int(deaths)
+                if year != "2020":
+                    # look through past years data, calculate deaths per year before 2020
+                    deaths_per_year[year] += int(deaths)
+                    if month != "12":
+                        deaths_before_2020 += int(deaths)
                 else:
                     # 2020 excess deaths
-                    deaths_in_2020 += int(deaths)
-            i += 1
-    deaths_before_2020 /= len(list_of_years) - 1
-    return int(deaths_in_2020 - deaths_before_2020)
+                    if month != "12":
+                        deaths_in_2020 += int(deaths)
+                        deaths_per_year[year] += int(deaths)
+        i += 1
+    deaths_before_2020 /= max(len(list_of_years) - 1, 1)
+    return (int(deaths_in_2020 - deaths_before_2020), deaths_per_year)
 
 """
 Data tyes:
@@ -41,7 +48,9 @@ Unweighted
 Predicted (weighted)
 """
 
-with open('/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths/Weekly_counts_of_deaths_by_jurisdiction_and_age_group.csv', newline='',  encoding='utf-8-sig') as csvfile:
+csv_path = "/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths/Weekly_counts_of_deaths_by_jurisdiction_and_age_group.csv"
+
+with open(csv_path, newline='',  encoding='utf-8-sig') as csvfile:
     weekly_count_excess_deaths = csv.reader(csvfile, delimiter=',')
     weekly_labels = next(weekly_count_excess_deaths)
     labels = {
@@ -51,5 +60,12 @@ with open('/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths
         "Deaths": weekly_labels.index("Number of Deaths"), 
         "Year": weekly_labels.index("Year")
         }
-    print(f"\n\nExcess deaths from Januray to November using weekly deaths by jurisdiction data: {count_excess_deaths(weekly_count_excess_deaths, 'Unweighted', labels, 0)}\n\n")
-    print("data current as of 12/27/20")
+    excess_deaths, deaths_per_year = count_excess_deaths(weekly_count_excess_deaths, 'Unweighted', labels, 0)
+    print(f"\n\nTotal deaths per year")
+    for year, deaths in deaths_per_year.items():
+        if year == "2020": print(f"{year}:\t{deaths}\t\t Note: 2020 data does not include December deaths")
+        else: print(f"{year}:\t{deaths}")
+    print(f"\n\n2020 Excess deaths from Januray to November using CDC data: {excess_deaths}\n\n")
+    fname = pathlib.Path(csv_path)
+    assert fname.exists(), f'No such file: {fname}'
+    print(f"data current as of {datetime.datetime.fromtimestamp(fname.stat().st_ctime)}")
