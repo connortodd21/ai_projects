@@ -6,3 +6,4 @@ cifar-10-batches-py/
 .vscode/
 .DS_Store
 settings.json
+*.csv
