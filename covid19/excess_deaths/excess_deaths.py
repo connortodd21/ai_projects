@@ -78,7 +78,7 @@ with open(csv_path, newline='',  encoding='utf-8-sig') as csvfile:
     dash = '\u2500' * 170
     print("{a:<55s}{c:^20s}{i:^5s}{c:^20s}{b:<60s}".format(a="States sorted by excess deaths", b="States sorted by excess death percent increase", c="|", i="i"))
     print(f"{dash}")
-    i = 0
+    i = 1
     for (raw_state), (pct_state) in zip(results_sorted_by_raw_excess_deaths, results_sorted_by_excess_death_percent):
         print("{:<55s}{:^20s}{i:^5d}{:^20s}{:<60s}".format(f"{raw_state['state']} had {raw_state['data'][0]} excess deaths ({round(raw_state['data'][1],2)}% change)", "|", "|" ,f"{pct_state['state']} had {pct_state['data'][0]} excess deaths ({round(pct_state['data'][1],2)}% change)", i=i))
         i+=1
