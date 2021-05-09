@@ -108,16 +108,17 @@ def run(file, year_input, starting_month, stopping_month, data_type):
 csv_path = "/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths/new_data.csv"
 # csv_path = "/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths/Weekly_counts_of_deaths_by_jurisdiction_and_age_group.csv"
 
-# run(csv_path, 2020, 1, 12, "Predicted (weighted)")
-# run(csv_path, 2020, 1, 10, "Predicted (weighted)")
-# run(csv_path, 2021, 1, 1, "Predicted (weighted)")
-# run(csv_path, 2020, 3, 12, "Predicted (weighted)")
-# run(csv_path, 2020, 4, 12, "Predicted (weighted)")
-# run(csv_path, 2020, 3, 6, "Predicted (weighted)")
-# run(csv_path, 2020, 6, 12, "Predicted (weighted)")
-# run(csv_path, 2020, 12, 12, "Predicted (weighted)")
-
+run(csv_path, 2020, 1, 12, "Predicted (weighted)")
+run(csv_path, 2020, 1, 10, "Predicted (weighted)")
+run(csv_path, 2021, 1, 1, "Predicted (weighted)")
+run(csv_path, 2020, 3, 12, "Predicted (weighted)")
+run(csv_path, 2020, 4, 12, "Predicted (weighted)")
+run(csv_path, 2020, 3, 6, "Predicted (weighted)")
+run(csv_path, 2020, 6, 12, "Predicted (weighted)")
+run(csv_path, 2020, 12, 12, "Predicted (weighted)")
 run(csv_path, 2021, 1, 2, "Predicted (weighted)")
+run(csv_path, 2021, 1, 3, "Predicted (weighted)")
+run(csv_path, 2021, 1, 4, "Predicted (weighted)")
 
 ######################################################
 # 
