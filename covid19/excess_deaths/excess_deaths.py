@@ -55,7 +55,7 @@ Predicted (weighted)
 
 def run(file, year_input, starting_month, stopping_month, data_type):
     currentMonth = datetime.now().month
-    with open(csv_path, newline='',  encoding='utf-8-sig') as csvfile:
+    with open(file, newline='',  encoding='utf-8-sig') as csvfile:
         data = csv.reader(csvfile, delimiter=',')
         weekly_labels = next(data)
         labels = {
@@ -71,7 +71,7 @@ def run(file, year_input, starting_month, stopping_month, data_type):
             excess_deaths, excess_death_percent, deaths_per_year, list_of_years = count_excess_deaths(data, weight, labels, 0, 6, state, year_input, list(range(starting_month,stopping_month + 1)))
             # excess_deaths, excess_death_percent, deaths_per_year, list_of_years = old_count_excess_deaths(data, weight, labels, 0, state)
             results_list.append({"state": state, "data": [excess_deaths, excess_death_percent]})
-            fname = pathlib.Path(csv_path)
+            fname = pathlib.Path(file)
             assert fname.exists(), f'No such file: {fname}'
             csvfile.seek(0)
             next(data)
@@ -108,17 +108,19 @@ def run(file, year_input, starting_month, stopping_month, data_type):
 csv_path = "/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths/new_data.csv"
 # csv_path = "/Users/connortodd/personal_projects/ai_projects/covid19/excess_deaths/Weekly_counts_of_deaths_by_jurisdiction_and_age_group.csv"
 
-run(csv_path, 2020, 1, 12, "Predicted (weighted)")
-run(csv_path, 2020, 1, 10, "Predicted (weighted)")
-run(csv_path, 2021, 1, 1, "Predicted (weighted)")
-run(csv_path, 2020, 3, 12, "Predicted (weighted)")
-run(csv_path, 2020, 4, 12, "Predicted (weighted)")
-run(csv_path, 2020, 3, 6, "Predicted (weighted)")
-run(csv_path, 2020, 6, 12, "Predicted (weighted)")
-run(csv_path, 2020, 12, 12, "Predicted (weighted)")
-run(csv_path, 2021, 1, 2, "Predicted (weighted)")
-run(csv_path, 2021, 1, 3, "Predicted (weighted)")
-run(csv_path, 2021, 1, 4, "Predicted (weighted)")
+# run(csv_path, 2020, 1, 12, "Predicted (weighted)")
+# run(csv_path, 2020, 1, 10, "Predicted (weighted)")
+# run(csv_path, 2021, 1, 1, "Predicted (weighted)")
+# run(csv_path, 2020, 3, 12, "Predicted (weighted)")
+# run(csv_path, 2020, 4, 12, "Predicted (weighted)")
+# run(csv_path, 2020, 3, 6, "Predicted (weighted)")
+# run(csv_path, 2020, 6, 12, "Predicted (weighted)")
+# run(csv_path, 2020, 12, 12, "Predicted (weighted)")
+# run(csv_path, 2021, 1, 2, "Predicted (weighted)")
+# run(csv_path, 2021, 1, 3, "Predicted (weighted)")
+# run(csv_path, 2021, 1, 4, "Predicted (weighted)")
+# run(csv_path, 2021, 1, 6, "Predicted (weighted)")
+run(csv_path, 2021, 1, 7, "Predicted (weighted)")
 
 ######################################################
 # 
