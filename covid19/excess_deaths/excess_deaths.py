@@ -118,9 +118,12 @@ csv_path = "/Users/connortodd/personal_projects/ai_projects/covid19/excess_death
 # run(csv_path, 2020, 12, 12, "Predicted (weighted)")
 # run(csv_path, 2021, 1, 2, "Predicted (weighted)")
 # run(csv_path, 2021, 1, 3, "Predicted (weighted)")
-# run(csv_path, 2021, 1, 4, "Predicted (weighted)")
-# run(csv_path, 2021, 1, 6, "Predicted (weighted)")
+run(csv_path, 2021, 1, 4, "Predicted (weighted)")
+run(csv_path, 2021, 1, 6, "Predicted (weighted)")
 run(csv_path, 2021, 1, 7, "Predicted (weighted)")
+run(csv_path, 2021, 1, 8, "Predicted (weighted)")
+run(csv_path, 2021, 1, 9, "Predicted (weighted)")
+run(csv_path, 2021, 5, 9, "Predicted (weighted)")
 
 ######################################################
 # 
